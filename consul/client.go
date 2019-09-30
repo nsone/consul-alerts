@@ -262,6 +262,8 @@ func (c *ConsulAlertClient) LoadConfig() {
 				valErr = loadCustomValue(&config.Notifiers.Prometheus.BaseURLs, val, ConfigTypeStrArray)
 			case "consul-alerts/config/notifiers/prometheus/endpoint":
 				valErr = loadCustomValue(&config.Notifiers.Prometheus.Endpoint, val, ConfigTypeString)
+			case "consul-alerts/config/notifiers/prometheus/payload":
+				valErr = loadCustomValue(&config.Notifiers.Prometheus.Payload, val, ConfigTypeStrMap)
 
 			// iLert notfier config
 			case "consul-alerts/config/notifiers/ilert/enabled":
