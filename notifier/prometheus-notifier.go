@@ -6,15 +6,28 @@ import (
 	"encoding/json"
 	"io/ioutil"
 	"net/http"
+	"time"
+	"html/template"
 
 	log "github.com/AcalephStorage/consul-alerts/Godeps/_workspace/src/github.com/Sirupsen/logrus"
 )
 
 type PrometheusNotifier struct {
 	Enabled     bool
-	ClusterName string   `json:"cluster-name"`
-	BaseURLs    []string `json:"base-urls"`
-	Endpoint    string   `json:"endpoint"`
+	ClusterName string            `json:"cluster-name"`
+	BaseURLs    []string          `json:"base-urls"`
+	Endpoint    string            `json:"endpoint"`
+	Payload     map[string]string `json:"payload"`
+}
+
+type TemplatePayloadData struct {
+	Node      string
+	Service   string
+	Check     string
+	Status    string
+	Output    string
+	Notes     string
+	Timestamp time.Time
 }
 
 // NotifierName provides name for notifier selection
@@ -27,22 +40,53 @@ func (notifier *PrometheusNotifier) Copy() Notifier {
 	return &n
 }
 
+func renderPayload(t TemplatePayloadData, templateFile string, defaultTemplate string) (string, error) {
+	var tmpl *template.Template
+	var err error
+	if templateFile == "" {
+		tmpl, err = template.New("base").Parse(defaultTemplate)
+	} else {
+		tmpl, err = template.ParseFiles(templateFile)
+	}
+
+	if err != nil {
+		return "", err
+	}
+
+	var body bytes.Buffer
+	if err := tmpl.Execute(&body, t); err != nil {
+		return "", err
+	}
+
+	return body.String(), nil
+}
+
 //Notify sends messages to the endpoint notifier
 func (notifier *PrometheusNotifier) Notify(messages Messages) bool {
 	var values []map[string]map[string]string
 
-	// TODO make it a template so that user can control what to send
 	for _, m := range messages {
-		values = append(values, map[string]map[string]string{
-			"labels": {
-				"alertName": fmt.Sprintf("%s/%s/%s", m.Check, m.Service, m.Node),
-				"host": m.Node,
-				"service": m.Service,
-				"severity": m.Status,
-				"output": m.Output,
-				"notes": m.Notes,
-			},
-		})
+		var value map[string]string
+		t := TemplatePayloadData{
+			Node:      m.Node,
+			Service:   m.Service,
+			Check:     m.Check,
+			Status:    m.Status,
+			Output:    m.Output,
+			Notes:     m.Node,
+			Timestamp: m.Timestamp,
+		}
+
+		for payloadKey, payloadVal := range notifier.Payload {
+			data, err := renderPayload(t, "", payloadVal)
+			if err != nil {
+				log.Println("Error rendering template: ", err)
+				return false
+			}
+			value[payloadKey] = string(data)
+		}
+
+		values = append(values, map[string]map[string]string{"labels": value})
 	}
 
 	requestBody, err := json.Marshal(values)
