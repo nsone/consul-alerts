@@ -66,14 +66,14 @@ func (notifier *PrometheusNotifier) Notify(messages Messages) bool {
 	var values []map[string]map[string]string
 
 	for _, m := range messages {
-		var value map[string]string
+		value := map[string]string{}
 		t := TemplatePayloadData{
 			Node:      m.Node,
 			Service:   m.Service,
 			Check:     m.Check,
 			Status:    m.Status,
 			Output:    m.Output,
-			Notes:     m.Node,
+			Notes:     m.Notes,
 			Timestamp: m.Timestamp,
 		}
 
