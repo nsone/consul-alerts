@@ -6,7 +6,6 @@ import (
 	"encoding/json"
 	"io/ioutil"
 	"net/http"
-	"time"
 	"html/template"
 
 	log "github.com/AcalephStorage/consul-alerts/Godeps/_workspace/src/github.com/Sirupsen/logrus"
@@ -27,7 +26,7 @@ type TemplatePayloadData struct {
 	Status    string
 	Output    string
 	Notes     string
-	Timestamp time.Time
+	Timestamp string
 }
 
 // NotifierName provides name for notifier selection
@@ -74,7 +73,7 @@ func (notifier *PrometheusNotifier) Notify(messages Messages) bool {
 			Status:    m.Status,
 			Output:    m.Output,
 			Notes:     m.Notes,
-			Timestamp: m.Timestamp,
+			Timestamp: m.Timestamp.Format("2006-01-02T15:04:05-0700"),
 		}
 
 		for payloadKey, payloadVal := range notifier.Payload {
