@@ -121,7 +121,6 @@ func (notifier *PrometheusNotifier) Notify(messages Messages) bool {
 	}
 
 	// Channel receiver. Making sure to return the final result in bool
-	result := true
 	for i := 0; i < len(notifier.BaseURLs); i++ {
 		select {
 		case r := <- c:
