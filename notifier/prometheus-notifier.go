@@ -126,10 +126,10 @@ func (notifier *PrometheusNotifier) Notify(messages Messages) bool {
 		select {
 		case r := <- c:
 			if (! r) {
-				result = false
+				return false
 			}
 		}
 	}
 
-	return result
+	return true
 }
